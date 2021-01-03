@@ -36,3 +36,6 @@
 - lib/api.js
 - lib/createRequestThunk.js
 
+------------------------------
+
+## redux-thunk
