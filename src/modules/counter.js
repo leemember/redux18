@@ -16,5 +16,6 @@ const counter = handleActions(
     },
     initialState
 );
+//증가일 경우 현재상태에서 +1 , 감소일 경우 현재상태에서 -1
 
 export default counter;
