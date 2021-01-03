@@ -7,9 +7,10 @@ import rootReducer from './modules';
 // 얘는 index.js를 호출해준다.
 // import loggerMiddleware from './lib/loggerMiddleware';
 import { createLogger } from 'redux-logger'
+import ReduxThunk from 'redux-thunk';
 
 const logger = createLogger();
-const store = createStore(rootReducer, applyMiddleware(logger));
+const store = createStore(rootReducer, applyMiddleware(logger, ReduxThunk));
 
 ReactDOM.render(
     <Provider store={store}>
