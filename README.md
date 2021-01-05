@@ -36,7 +36,7 @@
 - lib/api.js
 - lib/createRequestThunk.js
 
-------------------------------
+---
 
 ## 미들웨어란 ?
 
@@ -64,7 +64,7 @@
 
 ```
 (1) 액션 -> 미들웨어 -> 리듀서 -> 스토어
-(2) 액션 -> 리듀서 -> 스토어 
+(2) 액션 -> 리듀서 -> 스토어
 // 미들웨어가 없을경우 바로 리듀서한테 액션 넘겨줌
 ```
 
@@ -81,12 +81,13 @@ console.group(action && action.type); // 액션 + 액션 타입으로 log를 그
 ```
 
 미들웨어에서는 여러 종류의 작업을 처리할 수 있다.
+
 1. 특정 조건에 따라 액션을 무시
 2. 특정 조건에 따라 액션 정보를 가로채서 변경한 후 리듀서에게 전달
 3. 특정 액션에 기반하여 새로운 액션을 여러 번 디스패치
 
 이러한 미들웨어 속성을 사용하여 네트워크 요청과 같은 <비동기 작업>을 관리하면 매우 유용하다.
-redux-logger 미들웨어 설치하고 사용하기. 커스텀으로 제작한 loggerMiddleware보다 훨씬 더 잘 만들어진 라이브러리이다. 
+redux-logger 미들웨어 설치하고 사용하기. 커스텀으로 제작한 loggerMiddleware보다 훨씬 더 잘 만들어진 라이브러리이다.
 
 redux-logger를 사용하니 콘솔에 색상도 입혀지고, 액션 디스패치 시간도 나타남. 이전 액션이랑 다음 액션 현재 액션까지 전부 자세하게 나온다.
 
@@ -97,10 +98,10 @@ redux-logger를 사용하니 콘솔에 색상도 입혀지고, 액션 디스패�
 
 ## redux-thunk
 
-- 비동기 작업을 처리할 때 가장 기본적으로 사용하는 미들웨어. 
-Thunk란 ? Thunk는 특정 작업을 나중에 할 수 있도록 미루기 위해 함수 형태로 감싼 것이다. 예를 들어 주어진 파라미터에 1을 더하는 함수를 만들고 싶다면
+- 비동기 작업을 처리할 때 가장 기본적으로 사용하는 미들웨어.
+  Thunk란 ? Thunk는 특정 작업을 나중에 할 수 있도록 미루기 위해 함수 형태로 감싼 것이다. 예를 들어 주어진 파라미터에 1을 더하는 함수를 만들고 싶다면
 
-``` 
+```
 const addOne = x => x + 1;
 addOne(1); // 2
 ```
@@ -121,8 +122,45 @@ setTimeout(()=> {
 이렇게 하면 특정 작업을 나중에 하도록 미룰 수 있다. (화살표함수로만 구현)
 redux-thunk 라이브러리를 사용하면 thunk 함수를 만들어서 디스패치할 수 있다. 그러면 리덕스 미들웨어가 그 함수를 전달받아 store의 dispatch와 getState를 파라미터로 넣어서 호출해준다.
 
-``` 
+```
 const sampleThunk = () => (dispatch, getState) => {
     //현재 상태를 참조할 수 있고, 새 액션을 디스패치 할 수도 있다.
 }
 ```
+
+---
+
+sample 이라는 리듀서에 반복되는 구간들을 리팩토링 한다.
+
+```
+[GET_USERS]: state => ({
+            ...state,
+            loading: {
+                ...state.loading,
+                GET_USERS: true,
+            }
+        }),
+
+        //요청 성공시
+        [GET_USERS_SUCCESS]: (state, action) => ({
+            ...state,
+            loading: {
+                ...state.loading,
+                GET_USERS: false, // 요청완료
+            },
+            post: action.payload
+            //post 읽게 해준다.
+        }),
+
+        //요청 실패시
+        [GET_USERS_FAILURE]: (state, action) => ({
+            ...state,
+            loading: {
+                ...state.loading,
+                GET_USERS: false, // 요청완료
+            }
+        })
+    },
+```
+
+이런게 반복됨
