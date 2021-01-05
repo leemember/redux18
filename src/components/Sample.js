@@ -19,7 +19,7 @@ const Sample = ({ loadingPost, loadingUsers, post, users }) => {
             <hr />
             {/* ---------------------------------------------------- */}
             <section>
-                <h1>포스트</h1>
+                <h1>사용자 목록</h1>
                 {loadingUsers && '로딩 중...'}
                 {!loadingUsers && users && (
                    <ul>

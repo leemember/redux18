@@ -36,6 +36,24 @@ export const getPost = id => async dispatch => {
     }
 };
 
+export const getUsers = () => async dispatch => {
+    dispatch({ type : GET_USERS }); // 요청을 시작한 것을 알린다.
+    try {
+        const response = await api.getUsers();
+        dispatch({
+            type: GET_USERS_SUCCESS,
+            payload: response.data
+        }); // 요청 성공시 데이터가 응답
+    } catch (e) {
+        dispatch({
+            type: GET_USERS_FAILURE,
+            payload: e,
+            error: true,
+        }); // 요청 실패시 에러 발생
+        throw e;
+        //나중에 컴포넌트단에서 에러를 조회할 수 있게 해준다.
+    }
+};
 
 // 초기상태 선언하기.
 // 요청의 로딩 중 상태는 loading 이라는 객체에서 관리합니다.
@@ -99,7 +117,7 @@ const sample = handleActions(
                 ...state.loading,
                 GET_USERS: false, // 요청완료
             },
-            post: action.payload
+            users: action.payload
             //post 읽게 해준다.
         }),
 
