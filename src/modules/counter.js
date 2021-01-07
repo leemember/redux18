@@ -29,7 +29,7 @@ export function* counterSaga(){
     //takeEvery는 들어오는 모든 액션에 대해 특정 작업을 처리한다.
     yield takeEvery(INCREASE_ASYNC, increaseSaga);
 
-    //takeEvery는 기존에 진행 중이었던 작업이 있다면 취소하고 가장 마지막으로 실행된 작업만 수행한다.
+    //takeLatest는 기존에 진행 중이었던 작업이 있다면 취소하고 가장 마지막으로 실행된 작업만 수행한다.
     yield takeLatest(DECREASE_ASYNC, decreaseSaga);
 }
 const initialState = 0;

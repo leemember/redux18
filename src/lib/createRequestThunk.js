@@ -35,6 +35,7 @@ export default function createRequestThunk(type, request) {
 
 /*
 
-이번에 만든 유틸함수는 API 요청을 해주는 thunk 함수를 한 줄로 생성할 수 있게 해준다. 액션 타입과 API를 요청하는 함수는 파라미터로 넣어 주면 나머지 작업을 대신 처리해준다. 
+이번에 만든 유틸함수는 API 요청을 해주는 thunk 함수를 한 줄로 생성할 수 있게 해준다.
+액션 타입과 API를 요청하는 함수는 파라미터로 넣어 주면 나머지 작업을 대신 처리해준다. 
 
 */

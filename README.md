@@ -335,3 +335,6 @@ watch.next({type: 'HELLO'});
 ```
 $npm install redux-saga
 ```
+
+reudx-saga 라이브러리에서 쓸 수 있는 takeEvery는 들어오는 모든 액션에 대해 특정 작업을 처리해준다. <br>
+takeLatest는 기존에 진행 중이던 작업이 있다면 취소 처리하고 가장 마지막으로 실행된 작업만 수행한다.
