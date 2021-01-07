@@ -99,7 +99,8 @@ redux-logger를 사용하니 콘솔에 색상도 입혀지고, 액션 디스패�
 ## redux-thunk
 
 - 비동기 작업을 처리할 때 가장 기본적으로 사용하는 미들웨어.
-  Thunk란 ? Thunk는 특정 작업을 나중에 할 수 있도록 미루기 위해 함수 형태로 감싼 것이다. 예를 들어 주어진 파라미터에 1을 더하는 함수를 만들고 싶다면
+  Thunk란 ? Thunk는 특정 작업을 나중에 할 수 있도록 미루기 위해 함수 형태로 감싼 것이다.
+  예를 들어 주어진 파라미터에 1을 더하는 함수를 만들고 싶다면
 
 ```
 const addOne = x => x + 1;
@@ -127,6 +128,9 @@ const sampleThunk = () => (dispatch, getState) => {
     //현재 상태를 참조할 수 있고, 새 액션을 디스패치 할 수도 있다.
 }
 ```
+
+한마디로 redux-thunk는 함수 형태의 액션을 디스패치하여 미들웨어에서 해당 함수에 스토어의 dispatch와 getState를 파라미터로 넣어서 사용하는 원리이다. 그래서 구현한 thunk 함수 내부에서 원하는 API 요청도 하고, 다른 액션을 디스패치하거나 현재 상태를 조회하기도 한다.
+
 
 ---
 
@@ -198,4 +202,136 @@ redux-thunk를 처음 쓸 때는 작성해야 할 코드가 많아 불편할 수
 
 ## redux-saga
 
-이 미들웨어는 redux-thunk 다음으로 많이 사용하는 비동기 작업 관련 미들웨어다. 
+이 미들웨어는 redux-thunk 다음으로 많이 사용하는 비동기 작업 관련 미들웨어다.
+대부분의 경우에는 redux-thunk로도 충분히 기능을 구현할 수 있지만 saga는 좀 더 까다로운 상황에서 유용하다.
+
+<br>
+
+1. 기존 요청을 취소 처리해야 할 때 (불필요한 중복 요청 방지)
+2. 특정 액션이 발생했을 때 다른 액션을 발생시키거나, API 요청 등 리덕스와 관계없는 코드를 실행할 때
+3. 웹소켓을 이용할 때
+4. API 요청 실패 시 재요청해야 할 때
+
+## 제너레이터 함수 이해하기
+
+redux-saga에서는 ES6의 제너레이터 함수라는 문법을 사용한다. 이 문법의 핵심 기능은 함수를 작성할 때 함수를 특정 구간에 멈춰 놓을 수도 있고, 원할 때 다시 돌아가게 할 수도 있다는 것이다.
+
+```
+
+function weirdFunction() {
+    return 1;
+    return 2;
+    return 3;
+    return 4;
+    return 5;
+}
+```
+
+하나의 함수에서 값을 여러 개 반환하는 것은 불가능하므로 이 코드는 제대로 작동하지 않는다.
+정확히는 호출 할 때마다 맨위에 있는 값인 1만 반환된다.
+하지만 제너레이터 함수를 사용하면 함수에서 값을 순차적으로 반환할 수 있게 해준다. 
+심지어 함수의 흐름을 도중에 멈춰 놓았다가 다시 이어서 진행 시킬 수도 있다.
+
+```
+function* generatorFunction() {
+    console.log('ㅎㅇ');
+    yield 1;
+    console.log('ㅎㅇ');
+    yield 2;
+    console.log('ㅎㅇ');
+    yield 3;
+    return 4;
+}
+```
+
+제너레이터 함수를 만들 때는 function* 키워드를 사용한다.
+함수를 작성한 뒤에는 밑에 코드를 사용해 제너레이터를 생성해준다
+
+```
+const generator = generatorFunction();
+```
+제너레이터 함수를 호출했을 때 반환되는 객체를 제너레이터라고 부른다.
+제너레이터를 통해 이터레이터를 쉽게 만들 수 있다고 한다. 이터레이터는 Symbol 이터레이터를 가지고 있다. 실행결과는 자기 자신이다.
+
+```
+generator.next();
+//ㅎㅇ
+//{value: 1, done: false}
+generator.next();
+//ㅎㅇ
+//{value: 2, done: false}
+generator.next();
+//ㅎㅇ
+//{value: 3, done: false}
+generator.next();
+//{value: 4, done: true}
+generator.next();
+//{value: 4, done: true}
+```
+
+이렇게 제너레이터가 처음 만들어지면서 함수의 흐름은 멈춰 있는 상태가 된다. next()가 호출되면 다음 yield가 있는 곳까지 호출하고 다시 함수가 멈춘다. 제너레이터 함수를 사용하면 함수를 도중에 멈출 수도 있고, 순차적으로 여러 값을 반환 시킬 수도 있다. next 함수에 파라미터를 넣으면 제너레이터 함수에서 yield를 사용하여 해당 값을 조회할 수도 있다.
+
+```
+function* sumGenerator() {
+    console.log('sumGenerator가 만들어졌습니다');
+    let a = yield;
+    let b = yield;
+    yield a + b;
+}
+
+const sum = sumGenerator();
+sum.next();
+
+//sumGenerator가 만들어졌습니다
+// { value: undefined, done: false}
+sum.next(1);
+// { value: undefined, done: false}
+sum.next(2);
+// { value: 3, done: false}
+sum.next();
+// { value: undefined, done: false}
+```
+
+위에보면 next 파라미터 값에 1이랑 2를 넣으니 value:3 이라는 답이 나왔다.
+그리고 또 sum.next를 선언하니 done:true라는 값이 뜬다.
+이렇게 redux-saga는 제너레이터 함수 문법을 기반으로 비동기 작업을 관리해준다.
+redux-saga는 우리가 디스패치하는 액션을 모니터링해서 그에 따라 필요한 작업을 따로 수행할 수 있는 미들웨어라는 뜻이다 !
+
+```
+[예제]
+
+function* watchGenerator() {
+    console.log('모니터링중');
+    let prevAction = null;
+    while(true) {
+        const action = yield;
+        console.log('이전액션 : ', prevAction);
+        prevAction = action;
+        if ( action.type === 'HELLO' ) {
+            console.log('안녕하세요');
+        }
+    }
+}
+
+//제너레이터를 생성
+const watch = watchGenerator();
+
+watch.next();
+//모니터링중
+//{value: undefined, done: false}
+watch.next({type: 'TEST'});
+//이전 액션 : null
+//{value: undefined, done: false}
+watch.next({type: 'HELLO'});
+//이전 액션 : {type: 'TEST'}
+//안녕하세요!
+//{value: undefined, done: false}
+
+```
+
+위 코드와 비슷한 원리로 작동된다. 제너레이터 함수의 작동 방식만 기본적으로 파악하고 있다면 redux-saga에서 제공하는 여러 유용한 유틸함수를 사용하여 액션을 쉽게 처리할 수 있다.
+
+### 라이브러리 설치하기
+```
+$npm install redux-saga
+```
