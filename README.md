@@ -200,7 +200,7 @@ redux-thunk를 처음 쓸 때는 작성해야 할 코드가 많아 불편할 수
 
 <br>
 
-## redux-saga
+## 😁 redux-saga
 
 이 미들웨어는 redux-thunk 다음으로 많이 사용하는 비동기 작업 관련 미들웨어다.
 대부분의 경우에는 redux-thunk로도 충분히 기능을 구현할 수 있지만 saga는 좀 더 까다로운 상황에서 유용하다.
@@ -332,7 +332,7 @@ watch.next({type: 'HELLO'});
 
 위 코드와 비슷한 원리로 작동된다. 제너레이터 함수의 작동 방식만 기본적으로 파악하고 있다면 redux-saga에서 제공하는 여러 유용한 유틸함수를 사용하여 액션을 쉽게 처리할 수 있다.
 
-### 라이브러리 설치하기
+### 😊 라이브러리 설치하기
 
 ```
 $npm install redux-saga
@@ -411,7 +411,7 @@ api를 호출해야 하는 상황에는 사가 내부에서 직접 호출하지 
 [lib]-[createRequestSaga]
 
 <br>
-saga 전용 요청을 파일은 만든다.
+saga 전용 요청을 파일생성
 
 ```
 import { call, put } from 'redux-saga/effects';
@@ -442,4 +442,59 @@ export default function createRequestSaga(type, request) {
 }
 ```
 
-성공시와 실패전용 상태관리를 함
+반복되는 코드를 따로 함수화하여 리팩토링 하기 위해서 이 파일을 생성했다. 이걸 sample 리듀서에 호출시켜서 GET_POST, GET_USERS의 api를 불러오면 된다.
+
+### 😁 알아두면 유용한 기능들
+
+improt { delay, put, takeEvery, takeLatest, select } from 'redux-saga/effects';
+
+- takeEvery : 들어오는 모든 액션에 대해 특정 작업을 처리해준다.
+- takeLatest : 기존에 진행 중이던 작업이 있다면 취소 처리하고 가장 마지막으로 실행된 작업만 수행한다.
+- select : 사가 내부에서 현재 상태를 조회하는 방법이다.
+- delay : 시간을 지정해서 기다린다. (1초 = 1000)
+- put : 특정 액션을 디스패치 해준다.
+- throttle : 사가가 실행되는 주기를 제한하는 방법
+
+### 🍳 select 기능
+
+이 중에서 select 기능을 통해 console창에 현재 값을 찍어내준다.
+사가 내부에서 현재 상태를 참조해야 하는 상황이 생기면 이렇게 select를 사용하면 된다.
+
+### 🍳 throttle 기능
+
+takeEvery 대신 throttle이라는 함수를 사용하면 사가가 n초에 단 1번만 호출되도록 설정할 수 있다.
+
+예를들어, counterSaga를 다음과 같이 수정하면 increaseSaga는 3초에 단 한 번만 호출된다.
+
+```
+export function* counterSaga() {
+    // 첫 번째 파라미터 : n초 * 1000
+    yield throttle(3000, INCREASE_ASYNC, increaseSaga);
+    // takeLatest는 기존에 진행 중이던 작업이 있다면 취소 처리하고
+    // 가장 마지막으로 실행된 작업만 수행한다.
+    yield takeLatest(DECREASE_ASYNC, decreaseSaga);
+}
+
+```
+
+redux-saga는 저 기능들 외에도 여러 기능을 제공하기 때문에 비동기 작업을 처리하면서 겪을 수 있는 다양한 상황에 맞춰 개발 할 수 있다.
+
+### 🍗 https://redux-saga.js.org 에서 기능 참고하기
+
+<br>
+
+## 🍕 정리
+
+비동기 작업을 미들웨어로 어떻게 처리할 수 있는지 알아보았다.
+
+- redux-thunk : 일반 함수로 이루어져있어 간단명료하다.
+- redux-saga : 진입 장벽이 조금 있을 수 있으나 복잡한 상황에서 더욱 효율적으로 작업을 관리 할 수 있다는 장점이 있다.
+
+이것들 할 수 있는 비동기 작업 방법
+
+- redux-promise-middleware
+- redux-pender
+- redux-observable
+- 컴포넌트단에서 API 요청
+
+비동기 작업 처리할 때 리덕스 미들웨어를 사용하는 이유는 좀 더 편하게 처리하기 위해서다. 그냥 리덕스나 쓰기

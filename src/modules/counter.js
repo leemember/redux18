@@ -1,5 +1,6 @@
 import { createAction, handleActions } from 'redux-actions';
 import { delay, put, takeEvery, takeLatest, select } from 'redux-saga/effects'
+// select : 현재상태를 조회해주는 기능
 
 const INCREASE = 'counter/INCREASE';
 const DECREASE = 'counter/DECREASE';
