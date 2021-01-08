@@ -1,6 +1,8 @@
-import { handleActions } from 'redux-actions';
+import { createAction, handleActions } from 'redux-actions';
+import { takeLatest } from 'redux-saga/effects';
+// call, put
 import * as api from '../lib/api';
-import createRequestThunk from '../lib/createRequestThunk';
+import createRequstSaga from '../lib/createRequestSaga';
 
 // 액션 타입을 선언합니다.
 // 한 요청당 세 개를 만들어야 합니다.
@@ -15,95 +17,89 @@ const GET_USERS = 'sample/GET_USERS';
 const GET_USERS_SUCCESS = 'sample/GET_USERS_SUCCESS';
 // const GET_USERS_FAILURE = 'sample/GET_USERS_FAILURE';
 
-//thunk 함수를 생성합니다.
-//thunk 함수 내부에서는 시작할 때, 성공했을 때, 실패했을 때 다른 액션을 디스패치 합니다.
+export const getPost = createAction(GET_POST, id => id);
+export const getUsers = createAction(GET_USERS);
 
-export const getPost = createRequestThunk(GET_POST, api.getPost);
-export const getUsers = createRequestThunk(GET_USERS, api.getUsers);
+const getPostSaga = createRequstSaga(GET_POST, api.getPost);
+const getUsersSaga = createRequstSaga(GET_USERS, api.getUsers);
 
-// 초기상태 선언하기.
-// 요청의 로딩 중 상태는 loading 이라는 객체에서 관리합니다.
+// function* getPostSaga(action) {
+//     yield put(startLoading(GET_POST)); //로딩시작
+//     // 파라미터로 action을 받아 오면 액션의 정보를 조회할 수 있다.
+
+//     try {
+//         //call을 사용하면 Promise를 반환하는 함수를 호출하고, 기다릴 수 있다.
+//         //첫 번째 파라미터는 함수, 나머지 파라미터는 해당 함수에 넣을 인수다.
+
+//         const post = yield call(api.getPost, action.payload);
+//         //api.getPost(action.payload)를 의미한다. 
+
+//         yield put({
+//             type: GET_POST_SUCCESS,
+//             payload: post.data
+//         });
+//     } catch (e) {
+//         //try/catch 문을 사용하여 에러도 잡을 수 있다.
+//         yield put({
+//             type: GET_POST_FAILURE,
+//             payload: e,
+//             error: true
+//         });
+//     }
+
+//     yield put(finishLoading(GET_POST)); // 로딩 완료
+// }
+
+// function* getUsersSaga() {
+//     yield put(startLoading(GET_USERS));
+//     try {
+//         const users = yield call(api.getUsers);
+//         yield put({
+//             type: GET_USERS_SUCCESS,
+//             payload: users.data
+//         });
+//     } catch (e) {
+//         yield put({
+//             type: GET_USERS_FAILURE,
+//             payload: e,
+//             error: true
+//         });
+//     }
+//     yield put(finishLoading(GET_USERS));
+// }
+
+export function* sampleSaga() {
+    yield takeLatest(GET_POST, getPostSaga);
+    yield takeLatest(GET_USERS, getUsersSaga);
+}
+
+// 초기 상태 선언한다.
+// 요청의 로딩 중 상태는 loading이라는 객체에서 관리한다.
 
 const initialState = {
-    // loading: {
-    //     GET_POST:false,
-    //     GET_USERS: false
-    // },
-
     post: null,
     users: null
 };
 
 const sample = handleActions(
     {
-        // 요청시작
-        // [GET_POST]: state => ({
-        //     ...state,
-        //     loading: {
-        //         ...state.loading,
-        //         GET_POST: true,
-        //     }
-        // }),
-
-        //요청 성공시
         [GET_POST_SUCCESS]: (state, action) => ({
-            ...state,
-            // loading: {
-            //     ...state.loading,
-            //     GET_POST: false, // 요청완료
-            // },
+            ...state,            
             post: action.payload
-            //post 읽게 해준다.
         }),
-
-        //요청 실패시
-        // [GET_POST_FAILURE]: (state, action) => ({
-        //     ...state,
-        //     loading: {
-        //         ...state.loading,
-        //         GET_POST: false, // 요청완료
-        //     }
-        // }),
-
-        // ---------------------------------------------
-
-        // 요청시작
-        // [GET_USERS]: state => ({
-        //     ...state,
-        //     loading: {
-        //         ...state.loading,
-        //         GET_USERS: true,
-        //     }
-        // }),
-
-        //요청 성공시
         [GET_USERS_SUCCESS]: (state, action) => ({
             ...state,
-            // loading: {
-            //     ...state.loading,
-            //     GET_USERS: false, // 요청완료
-            // },
             users: action.payload
-            //post 읽게 해준다.
         })
-
-        //요청 실패시
-        // [GET_USERS_FAILURE]: (state, action) => ({
-        //     ...state,
-        //     loading: {
-        //         ...state.loading,
-        //         GET_USERS: false, // 요청완료
-        //     }
-        // })
     },
     initialState
 );
 
 export default sample;
 
+/* 
 
+GET_POST 액션의 경우에는 API를 요청 할 때 어떤 ID로 조회할지 정해줘야한다.
+redux-saga를 사용할 때는 id처럼 요청에 필요한 값을 액션의 payload로 넣어줘야한다.
 
-// 코드가 훨신 깔끔해졌다.
-// sample 리듀서에는 로딩 중에 대한 상태를 관리할 필요가 없고, 성공했을 때의 케이스만 잘 관리해주면 된다.
-// 추가로 실패했을 때의 케이스를 관리하고 싶다면 _FAULURE가 붙은 액션을 리듀서에서 처리해 주면 된다.
-// 다른 방법으로는 컨테이너 컴포넌트에서 try/catch문을 사용하여 에러 값을 조회 할 수 있다.
+ */

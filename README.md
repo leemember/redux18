@@ -131,7 +131,6 @@ const sampleThunk = () => (dispatch, getState) => {
 
 한마디로 redux-thunk는 함수 형태의 액션을 디스패치하여 미들웨어에서 해당 함수에 스토어의 dispatch와 getState를 파라미터로 넣어서 사용하는 원리이다. 그래서 구현한 thunk 함수 내부에서 원하는 API 요청도 하고, 다른 액션을 디스패치하거나 현재 상태를 조회하기도 한다.
 
-
 ---
 
 sample 이라는 리듀서에 반복되는 구간들을 리팩토링 한다.
@@ -189,9 +188,10 @@ API를 요청할 때 마다 17줄 정도 되는 thunk 함수를 작성하는 것
 그러므로 😁반복되는 로직을 따로 분리하여 코드양을 줄여보는 과정이 <b>리팩토링</b>😁이다.
 
 [modules]-[sample.js] 코드를 참고해보면, <br>
+
 1. 코드가 훨신 깔끔해졌다. (= 이게 바로 리팩토링이다.)
 2. 해당 리듀서에는 로딩 중에 대한 상태를 관리할 필요가 없고, 성공했을 때의 케이스만 잘 관리해주면 된다.
-3. 추가로 실패했을 때의 케이스를 관리하고 싶다면 _FAULURE가 붙은 액션을 리듀서에서 처리해 주면 된다.
+3. 추가로 실패했을 때의 케이스를 관리하고 싶다면 \_FAULURE가 붙은 액션을 리듀서에서 처리해 주면 된다.
 4. 다른 방법으로는 컨테이너 컴포넌트에서 try/catch문을 사용하여 에러 값을 조회 할 수 있다.
 
 <br>
@@ -229,7 +229,7 @@ function weirdFunction() {
 
 하나의 함수에서 값을 여러 개 반환하는 것은 불가능하므로 이 코드는 제대로 작동하지 않는다.
 정확히는 호출 할 때마다 맨위에 있는 값인 1만 반환된다.
-하지만 제너레이터 함수를 사용하면 함수에서 값을 순차적으로 반환할 수 있게 해준다. 
+하지만 제너레이터 함수를 사용하면 함수에서 값을 순차적으로 반환할 수 있게 해준다.
 심지어 함수의 흐름을 도중에 멈춰 놓았다가 다시 이어서 진행 시킬 수도 있다.
 
 ```
@@ -244,12 +244,13 @@ function* generatorFunction() {
 }
 ```
 
-제너레이터 함수를 만들 때는 function* 키워드를 사용한다.
+제너레이터 함수를 만들 때는 function\* 키워드를 사용한다.
 함수를 작성한 뒤에는 밑에 코드를 사용해 제너레이터를 생성해준다
 
 ```
 const generator = generatorFunction();
 ```
+
 제너레이터 함수를 호출했을 때 반환되는 객체를 제너레이터라고 부른다.
 제너레이터를 통해 이터레이터를 쉽게 만들 수 있다고 한다. 이터레이터는 Symbol 이터레이터를 가지고 있다. 실행결과는 자기 자신이다.
 
@@ -332,9 +333,113 @@ watch.next({type: 'HELLO'});
 위 코드와 비슷한 원리로 작동된다. 제너레이터 함수의 작동 방식만 기본적으로 파악하고 있다면 redux-saga에서 제공하는 여러 유용한 유틸함수를 사용하여 액션을 쉽게 처리할 수 있다.
 
 ### 라이브러리 설치하기
+
 ```
 $npm install redux-saga
 ```
 
 reudx-saga 라이브러리에서 쓸 수 있는 takeEvery는 들어오는 모든 액션에 대해 특정 작업을 처리해준다. <br>
 takeLatest는 기존에 진행 중이던 작업이 있다면 취소 처리하고 가장 마지막으로 실행된 작업만 수행한다.
+
+<br>
+
+### 😊 redux-saga 결과물
+
+<br>
+
+원래는 DECREASE_ASYNC 액션이 두 번 디스패치되었음에도 불구하고 DECREASE 액션은 단 한 번만 디스패치 되었다. 그 이유는 decreaseSaga를 등록할 때 takeLatest를 사용했기 때문이다. takeLatest는 여러 액션이 중첩되어 디스패치되었을 때는 기존의 것들은 무시하고 가장 마지막 액션만 제대로 처리한다.
+
+### 😊 redux-saga로 API 요청 상태 관리하기
+
+```
+
+function* getPostSaga(action) {
+    yield put(startLoading(GET_POST)); //로딩시작
+    // 파라미터로 action을 받아 오면 액션의 정보를 조회할 수 있다.
+
+    try {
+        //call을 사용하면 Promise를 반환하는 함수를 호출하고, 기다릴 수 있다.
+        //첫 번째 파라미터는 함수, 나머지 파라미터는 해당 함수에 넣을 인수다.
+
+        const post = yield call(api.getPost, action.payload);
+        //api.getPost(action.payload)를 의미한다.
+
+        yield put({
+            type: GET_POST_SUCCESS,
+            payload: post.data
+        });
+    } catch (e) {
+        //try/catch 문을 사용하여 에러도 잡을 수 있다.
+        yield put({
+            type: GET_POST_FAILURE,
+            payload: e,
+            error: true
+        });
+    }
+
+    yield put(finishLoading(GET_POST)); // 로딩 완료
+}
+
+```
+
+여기서 GET_POST 액션의 경우에는 api를 요청할 때 어떤 id로 조회할지 정해줘야한다. 리덕스 사가를 사용할 때는 id처럼 요청에 필요한 값을 액션의 payload로 넣어줘야한다.
+예를 들면 이런상황이라면 다음 같은 액션이 디스패치된다.
+
+```
+
+{
+    type: 'sample/GET_POST',
+    payload: 1
+}
+
+```
+
+이 액션을 처리하기 위한 사가를 작성할 때 payload 값을 api를 호출하는 함수의 인수로 넣어주어야 한다.
+
+<br>
+
+api를 호출해야 하는 상황에는 사가 내부에서 직접 호출하지 않고 Call 함수를 사용한다. call함수의 경우, 첫 번재 인수는 호출하고 싶은 함수이고, 그 뒤에 오는 인수들은 해당 함수에 넣어 주고 싶은 인수이다. 지금 getPostSaga의 경우 id를 의미하는 action.payload가 인수가 된다.
+
+<br>
+
+## 😁 saga 리팩토링
+
+반복되는 코드를 따로 함수화하여 리팩토링하기.
+
+<br>
+
+[lib]-[createRequestSaga]
+
+<br>
+saga 전용 요청을 파일은 만든다.
+
+```
+import { call, put } from 'redux-saga/effects';
+import { startLoading, finishLoading} from '../modules/loading';
+
+export default function createRequestSaga(type, request) {
+    const SUCCESS = `${type}_SUCCESS`;
+    const FAILURE = `${type}_FAILURE`;
+
+    return function*(action) {
+        yield put(startLoading(type)); //로딩시작
+        try {
+            const response = yield call(request, action.payload);
+            yield put({
+                type: SUCCESS,
+                payload: response.data
+            });
+        } catch (e) {
+            yield put({
+                type: FAILURE,
+                payload: e,
+                error: true
+            });
+        }
+
+        yield put(finishLoading(type)); //로딩 끝
+    }
+}
+```
+
+성공시와 실패전용 상태관리를 함
